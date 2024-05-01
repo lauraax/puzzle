@@ -1,62 +1,82 @@
-import pygame, sys
+import pygame, sys, random
 from pygame.sprite import Sprite
 from pygame.locals import *
-from tablero import *
 from cuadritos import *
+from settings import *
 
-#definimos colores
-BLACK = (0,0,0)
+#encapsulamos todos los procesos del juego en la clase Game
+class Game:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        pygame.display.set_caption("Puzzle Deslizante")
+        self.cuadritos = []
+        self.mostrar_inicio = True
+        #hacemos la matriz de cuadritos
+        for y in range(FILAS):
+            for x in range(COL):
+               if (x, y) != (COL - 1, FILAS -1):
+                   self.cuadritos.append(Cuadritos(y * COL + x + 1, x, y)) 
+        self.cuadro_vacio = CuadroVacio(COL - 1, FILAS - 1)
+        random.shuffle(self.cuadritos) #se supone q esto desordena los cuadritos pero no :c
+    #funcion para hacer el blit de cada cuadrito en la lista cuadritos
+    def dibujar_cuadritos(self):
+        self.screen.fill(BLACK)
+        for cuadrito in self.cuadritos:
+            self.screen.blit(cuadrito.image, cuadrito.rect)
+        pygame.display.flip()
 
-# definir el tamaño de la pantalla
-size = width, height = 800, 600
-screen = pygame.display.set_mode(size)
-reloj = pygame.time.Clock()
+    #funcion para que el cuadro vacio se mueva y este mueva los otros cuadritos
+    def mover_cuadrito(self, dx, dy):
+        x, y = self.cuadro_vacio.x + dx, self.cuadro_vacio.y + dy #establecemos las cordenadas
+        for cuadrito in self.cuadritos:
+            if cuadrito.rect.topleft == (x * TILE_SIZE, y * TILE_SIZE):
+                cuadrito.rect.topleft = self.cuadro_vacio.x * TILE_SIZE, self.cuadro_vacio.y * TILE_SIZE
+                self.cuadro_vacio.x, self.cuadro_vacio.y = x, y
+                return
+            
+    def juego_terminado(self):
+        for i, cuadrito in enumerate(self.cuadritos): #recorremos la lista y si cada posicion coincide con la enumeracion el jugador gana
+            if cuadrito.number != i + 1:
+                return False
+            else:
+                return False
+            
+    def dibujar_texto(self):
+        if self.mostrar_inicio:
+            fuente = pygame.font.SysFont(None, 30)
+            texto = fuente.render("Ganaste", True, WHITE)
+            self.screen.blit(texto, ((WIDTH - texto.get_width()) // 10, HEIGHT - 50))
 
-#definimos variables a utilizar
-GAME_SIZE = 3
+    def start(self):
 
-#asignamos la clase Tablero al objeto tablero
-tablero = Tablero(size)
-cuadrito = Cuadritos(tablero, size)
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.KEYDOWN: #movimiento del cuadro vacio
+                    if event.key == pygame.K_LEFT:
+                        self.mover_cuadrito(1, 0)
+                    elif event.key == pygame.K_RIGHT:
+                        self.mover_cuadrito(-1, 0)
+                    elif event.key == pygame.K_UP:
+                        self.mover_cuadrito(0, 1)
+                    elif event.key == pygame.K_DOWN:
+                        self.mover_cuadrito(0, -1)
+                    elif event.key == pygame.K_SPACE:
+                        self.barajar_cuadritos()
+
+            self.dibujar_cuadritos()
+
+            if self.juego_terminado():
+                running = False
+                
+
+        pygame.quit()
+        sys.exit()
+
+game = Game()
+game.start()
 
 
-def main ():
-    pygame.init
-    pygame.mixer.init()
-    
-    #fondo
-    background_image = pygame.image.load("imagenes/space.jpg")
-    background_rect = background_image.get_rect()
-    pygame.display.set_caption("Puzzle")
-    surface = pygame.Surface((tablero.rect.width, tablero.rect.height))
-
-    #funcion dibujar cuadricula
-    def dibujar_cuadricula(surface, cuadrito):
-        for fila in range(-1, tablero.rect.height, cuadrito):
-            pygame.draw.line(surface, BLACK, (0, fila), (tablero.rect.width, fila), 2)
-        for columna in range(-1, tablero.rect.width, cuadrito):
-            pygame.draw.line(surface, BLACK, (columna, 0), (columna, tablero.rect.height), 2)
-
-
-    game = True
-    
-    while game:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                sys.exit()
-
-        screen.blit(background_image, background_rect)
-        screen.blit(tablero.image, tablero.rect)
-        screen.blit(cuadrito.imagen, cuadrito.rect)
-        keys = pygame.key.get_pressed()
-        cuadrito.actualizar_posicion(keys)
-
-        image_copy = tablero.image.copy()
-        dibujar_cuadricula(image_copy, cuadrito.tamaño)
-        screen.blit(image_copy, tablero.rect)
-        
-
-        pygame.display.update()
-        reloj.tick(60)
-if __name__ == '__main__':
-    main()

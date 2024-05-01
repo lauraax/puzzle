@@ -1,0 +1,32 @@
+@startuml
+
+class CuadroVacio {
+    - image: pygame.Surface
+    - rect: pygame.Rect
+    - x: int
+    - y: int
+}
+
+class Cuadrito {
+    + number: int
+    - image: pygame.Surface
+    - rect: pygame.Rect
+}
+
+class Game {
+    - screen: pygame.Surface
+    - cuadritos: List[Cuadrito]
+    - mostrar_inicio: bool
+    - cuadro_vacio: CuadroVacio
+    + __init__()
+    + dibujar_cuadritos()
+    + mover_cuadrito(dx: int, dy: int)
+    + dibujar_texto_inicio()
+    + start()
+}
+
+Cuadrito  -->  CuadroVacio : Crea
+
+Game *-- Cuadrito : Contiene
+
+@enduml
